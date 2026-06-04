@@ -18,9 +18,9 @@ from typing import Optional
 
 import psutil
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # Known RAT / backdoor process names (lowercase)
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 RAT_NAMES: set[str] = {
     "darkcomet", "njrat", "nanocore", "quasarrat", "asyncrat",
     "remcos", "orcus", "limerat", "revenge-rat", "adwind",
@@ -49,9 +49,9 @@ DLL_SUSPECT_PARTS: list[str] = [
 IS_WIN = platform.system() == "Windows"
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # Data classes
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 @dataclass
 class Finding:
     pid: int
@@ -75,9 +75,9 @@ class ProcessReport:
         return len(self.findings) == 0
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # Windows: Authenticode signature check via WinVerifyTrust
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 if IS_WIN:
     import ctypes.wintypes
 
@@ -273,16 +273,16 @@ else:
                 f.seek(0)
                 blob = f.read(min(os.path.getsize(filepath), 4 * 1024 * 1024))
                 # Look for common signing markers
-                if b"Signature" in blob or b".gnu.hash" in blob:
+                if b"Signature" in blob or b".note.gnu.build-id" in blob:
                     return True
             return False
         except Exception:
-            return True  # can't read -> skip
+            return False  # unreadable, treat as unverified -> skip
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # Suspicious-path check
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 def is_suspect_path(exe_path: str) -> tuple[bool, str]:
     """Return (is_suspicious, matched_fragment)."""
     lower = exe_path.lower().replace("\\", "/")
@@ -292,9 +292,9 @@ def is_suspect_path(exe_path: str) -> tuple[bool, str]:
     return False, ""
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # RAT name matching
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 def matches_rat_name(proc_name: str) -> Optional[str]:
     lower = proc_name.lower().replace(".exe", "").replace(".bin", "")
     for rat in RAT_NAMES:
@@ -303,9 +303,9 @@ def matches_rat_name(proc_name: str) -> Optional[str]:
     return None
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # Hidden / orphaned process detection
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # Windows bootstrap processes that are normally orphaned (parent smss.exe exits)
 _WIN_BOOTSTRAP_NAMES: set[str] = {
     "csrss.exe", "wininit.exe", "winlogon.exe", "services.exe",
@@ -350,9 +350,9 @@ def check_hidden_or_orphaned(proc: psutil.Process) -> Optional[str]:
     return None
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # DLL injection indicators (Windows)
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 def check_dll_injection(proc: psutil.Process) -> list[str]:
     """Look for DLL injection red flags in a process's loaded modules."""
     flags: list[str] = []
@@ -410,9 +410,9 @@ def check_dll_injection(proc: psutil.Process) -> list[str]:
     return flags
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # Main scan
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 def scan_processes(
     check_signatures: bool = True,
     verbose: bool = False,
@@ -468,9 +468,9 @@ def scan_processes(
     return report
 
 
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 # CLI
-# . . . . . . . . . . . . . . . . . . . -
+# . . . . . . . . . . -
 def print_report(report: ProcessReport) -> None:
     print(f"\nProcess integrity scan complete")
     print(f"  scanned : {report.scanned}")

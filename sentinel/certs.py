@@ -99,7 +99,7 @@ def _is_known_ca(name: x509.Name) -> bool:
         except Exception:
             pass
     combined = " ".join(parts).lower()
-    return any(ca in combined for ca in KNOWN_CAS)
+    return any(re.search(r"" + re.escape(ca) + r"", combined) for ca in KNOWN_CAS)
 
 
 def _get_org(name: x509.Name) -> str:
@@ -120,7 +120,7 @@ def _has_server_auth_eku(cert: x509.Certificate) -> bool:
         eku = cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage)
         return ExtendedKeyUsageOID.SERVER_AUTH in eku.value
     except x509.ExtensionNotFound:
-        return False
+        return True  # no EKU = valid for all purposes per RFC 5280
 
 
 def audit_root_store() -> list[CertFinding]:
