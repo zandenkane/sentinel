@@ -15,6 +15,21 @@ you drop onto a suspect machine and run. It exits non-zero when it finds
 high-severity indicators, making it usable in scripts and CI pipelines.
 
 
+## Why
+
+Built this cuz I was bored. Happy holidays or whatever.
+
+
+## Configuration
+
+Sentinel ships with a `sentinel.yaml` config file that lets you tune
+detection behavior without touching code. You can override the beaconing
+observation window, jitter threshold, C2 port list, severity thresholds,
+excluded processes, and output format. Copy `sentinel.yaml` to your working
+directory or `~/.config/sentinel/config.yaml` and edit it. See the comments
+in the file for what each option does.
+
+
 ## Features
 
 - **Process integrity scanning**. Authenticode signature verification on
@@ -320,6 +335,13 @@ README.md
 
 - ASN resolution depends on DNS being functional. On a compromised host
   with tampered DNS, the results may be unreliable.
+
+
+## Documentation
+
+See [`docs/methodology.md`](docs/methodology.md) for a detailed writeup on
+how each detection module works, what MITRE ATT&CK techniques they map to,
+and the tradeoffs behind each detection rule.
 
 
 ## License
