@@ -324,4 +324,4 @@ README.md
 
 ## License
 
-All Rights Reserved. Proprietary. no forking, no redistribution.
+MIT License. See [LICENSE](LICENSE) for details.
