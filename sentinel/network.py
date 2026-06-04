@@ -82,7 +82,7 @@ def _check_signature_win(exe_path: str) -> bool:
     """Use PowerShell Get-AuthenticodeSignature to check if a PE is signed."""
     try:
         cmd = (
-            f'(Get-AuthenticodeSignature '{exe_path}').Status -eq 'Valid''
+            f"(Get-AuthenticodeSignature '{exe_path}').Status -eq 'Valid'"
         )
         out = subprocess.run(
             ["powershell", "-NoProfile", "-Command", cmd],
