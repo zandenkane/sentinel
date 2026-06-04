@@ -10,44 +10,44 @@ It inspects running processes, network connections, persistence mechanisms,
 and local certificates to surface indicators of compromise without requiring
 cloud connectivity or a full EDR deployment.
 
-This is not a replacement for production EDR. It is a triage tool -- something
+This is not a replacement for production EDR. It is a triage tool. something
 you drop onto a suspect machine and run. It exits non-zero when it finds
 high-severity indicators, making it usable in scripts and CI pipelines.
 
 
 ## Features
 
-- **Process integrity scanning** -- Authenticode signature verification on
+- **Process integrity scanning**. Authenticode signature verification on
   Windows, ELF heuristics on Linux. Flags unsigned binaries, executables
   running from temp directories, known RAT process names (DarkComet, njRAT,
   AsyncRAT, Cobalt Strike beacon, Sliver, Meterpreter, and ~30 others),
   orphaned processes, and DLL injection indicators.
 
-- **Network connection analysis** -- Enumerates established TCP connections,
+- **Network connection analysis**. Enumerates established TCP connections,
   flags traffic to known C2 ports (4444, 5555, 31337, etc.), resolves remote
   IPs to ASN/hostname via Team Cymru DNS lookups, and identifies unsigned
   processes making outbound connections.
 
-- **C2 beaconing detection** -- Samples connections over a configurable time
+- **C2 beaconing detection**. Samples connections over a configurable time
   window, computes inter-connection intervals, and flags regular-interval
   patterns with low jitter (coefficient of variation below 15%). Catches
   the callback timing that most RATs and implants use.
 
-- **Persistence mechanism hunting** -- On Windows: Run/RunOnce registry keys,
+- **Persistence mechanism hunting**. On Windows: Run/RunOnce registry keys,
   Winlogon Shell/Userinit tampering, Image File Execution Options debugger
   hijacking, AppInit_DLLs, WMI event subscriptions, scheduled tasks, startup
   folder contents, and services running from non-standard paths. On Linux:
   crontabs (user and system), systemd units, shell RC file injection, and
   init.d scripts.
 
-- **Certificate store audit** -- Inspects the local certificate store for
+- **Certificate store audit**. Inspects the local certificate store for
   untrusted roots, expired certificates, and certificates with unusual
   properties that might indicate MITM proxying.
 
-- **ARP anomaly detection** -- Checks the local ARP table for duplicate MAC
+- **ARP anomaly detection**. Checks the local ARP table for duplicate MAC
   addresses, gateway spoofing, and other indicators of ARP poisoning.
 
-- **Consolidated reporting** -- JSON or plain text output with findings sorted
+- **Consolidated reporting**. JSON or plain text output with findings sorted
   by severity. Exit code 1 on high/critical findings for scripted use.
 
 
@@ -185,8 +185,8 @@ Every running process is checked against several indicators:
    their binaries, which is more common than you would expect on commodity
    RAT deployments.
 
-4. **Parent-child validation.** Orphaned processes -- where the parent PID
-   no longer exists -- are flagged. On Linux, zombie processes and PIDs
+4. **Parent-child validation.** Orphaned processes. where the parent PID
+   no longer exists. are flagged. On Linux, zombie processes and PIDs
    missing from /proc are also reported.
 
 5. **DLL/SO injection indicators.** On Windows, the loaded modules of each
@@ -200,7 +200,7 @@ Every running process is checked against several indicators:
 
 The network module works in two phases:
 
-**Phase 1 -- Snapshot.** All established TCP connections are enumerated via
+**Phase 1. Snapshot.** All established TCP connections are enumerated via
 psutil. Each connection is enriched with:
 
 - Process name and executable path
@@ -211,7 +211,7 @@ psutil. Each connection is enriched with:
 Connections from unsigned processes to external IPs are flagged. Connections
 to known C2 ports get a separate high-severity flag.
 
-**Phase 2 -- Beaconing (optional, --full mode).** The scanner polls TCP
+**Phase 2 .  Beaconing (optional, --full mode).** The scanner polls TCP
 connections at a configurable rate (default 2s) over a configurable window
 (default 60s). For each unique (remote_addr, remote_port, pid) tuple, it
 records timestamps and computes:
@@ -221,7 +221,7 @@ records timestamps and computes:
 
 Tuples with 4+ samples, intervals above 1 second, and jitter below 15%
 are reported as beaconing candidates. This catches the regular callback
-timing used by most C2 frameworks -- Cobalt Strike, Sliver, Havoc, and
+timing used by most C2 frameworks. Cobalt Strike, Sliver, Havoc, and
 commodity RATs all exhibit this pattern unless the operator has configured
 heavy jitter.
 
@@ -324,4 +324,4 @@ README.md
 
 ## License
 
-All Rights Reserved. Proprietary -- no forking, no redistribution.
+All Rights Reserved. Proprietary. no forking, no redistribution.

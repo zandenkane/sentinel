@@ -1,4 +1,4 @@
-"""Main orchestrator -- runs all detection modules and produces a consolidated report."""
+"""Main orchestrator .  runs all detection modules and produces a consolidated report."""
 
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def run_modules(quick: bool, selected: list[str] | None = None) -> list[Finding]
         try:
             findings = mod.run(quick=quick)
             elapsed = time.monotonic() - t0
-            print(f"    done in {elapsed:.1f}s -- {len(findings)} finding(s)")
+            print(f"    done in {elapsed:.1f}s .  {len(findings)} finding(s)")
             results.extend(findings)
         except Exception as exc:
             elapsed = time.monotonic() - t0
@@ -132,7 +132,7 @@ def format_text_report(report: dict[str, Any]) -> str:
     lines.append("-" * 60)
 
     if not report["findings"]:
-        lines += ["  No findings -- system looks clean.", "=" * 60]
+        lines += ["  No findings .  system looks clean.", "=" * 60]
         return "\n".join(lines)
 
     sorted_f = sorted(report["findings"], key=lambda f: SEV_ORDER.get(f["severity"], 99))
@@ -152,9 +152,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--quick", action="store_true", default=True,
-                      help="Fast scan -- skip slow checks (default)")
+                      help="Fast scan .  skip slow checks (default)")
     mode.add_argument("--full", action="store_true",
-                      help="Deep scan -- run all checks")
+                      help="Deep scan .  run all checks")
     p.add_argument("--json", action="store_true", dest="json_out",
                    help="Output as JSON instead of text")
     p.add_argument("-o", "--output", type=str, default=None,

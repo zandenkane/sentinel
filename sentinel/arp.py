@@ -1,4 +1,4 @@
-"""ARP anomaly detection -- enumerate the ARP table and flag spoofing indicators."""
+"""ARP anomaly detection .  enumerate the ARP table and flag spoofing indicators."""
 # All Rights Reserved. Proprietary, no forking, no redistribution.
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ def read_arp_table() -> dict[str, str]:
     try:
         out = subprocess.check_output(["arp", "-a"], text=True, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
-        print("[!] arp command not found -- install net-tools or iproute2", file=sys.stderr)
+        print("[!] arp command not found .  install net-tools or iproute2", file=sys.stderr)
         sys.exit(1)
 
     table: dict[str, str] = {}
@@ -55,7 +55,7 @@ def read_arp_table() -> dict[str, str]:
 
 
 def detect_shared_macs(table: dict[str, str]) -> list[dict]:
-    """Find MACs claimed by multiple IPs -- ARP spoofing indicator."""
+    """Find MACs claimed by multiple IPs .  ARP spoofing indicator."""
     mac_to_ips: dict[str, list[str]] = defaultdict(list)
     for ip, mac in table.items():
         mac_to_ips[mac].append(ip)
@@ -109,7 +109,7 @@ def run(baseline_path: Path, update: bool = False, gateway: str | None = None) -
         alerts += detect_baseline_changes(table, entries, saved_gw)
         print(f"[*] Compared against baseline ({len(entries)} saved entries)")
     else:
-        print("[*] No baseline found -- saving current state as baseline")
+        print("[*] No baseline found .  saving current state as baseline")
         save_baseline(baseline_path, table, gateway)
 
     if update and baseline_data:

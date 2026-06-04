@@ -1,9 +1,9 @@
 """
-Process integrity checks -- signature verification, suspicious paths,
+Process integrity checks .  signature verification, suspicious paths,
 known RAT names, hidden/orphaned processes, DLL injection indicators.
 Windows primary, Linux secondary.
 
-All Rights Reserved. Proprietary -- no forking, no redistribution.
+All Rights Reserved. Proprietary .  no forking, no redistribution.
 """
 
 from __future__ import annotations
@@ -18,9 +18,9 @@ from typing import Optional
 
 import psutil
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # Known RAT / backdoor process names (lowercase)
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 RAT_NAMES: set[str] = {
     "darkcomet", "njrat", "nanocore", "quasarrat", "asyncrat",
     "remcos", "orcus", "limerat", "revenge-rat", "adwind",
@@ -49,9 +49,9 @@ DLL_SUSPECT_PARTS: list[str] = [
 IS_WIN = platform.system() == "Windows"
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # Data classes
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 @dataclass
 class Finding:
     pid: int
@@ -75,9 +75,9 @@ class ProcessReport:
         return len(self.findings) == 0
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # Windows: Authenticode signature check via WinVerifyTrust
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 if IS_WIN:
     import ctypes.wintypes
 
@@ -262,14 +262,14 @@ else:
             with open(filepath, "rb") as f:
                 magic = f.read(4)
                 if magic != b"\x7fELF":
-                    return True  # not an ELF -- skip
+                    return True  # not an ELF .  skip
                 # Seek to section header offset in ELF header
                 f.seek(0)
                 hdr = f.read(64)
                 if len(hdr) < 64:
                     return True
                 # Check for .note.gnu.build-id or codesign sections
-                # by scanning raw bytes -- rough heuristic
+                # by scanning raw bytes .  rough heuristic
                 f.seek(0)
                 blob = f.read(min(os.path.getsize(filepath), 4 * 1024 * 1024))
                 # Look for common signing markers
@@ -280,9 +280,9 @@ else:
             return True  # can't read -> skip
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # Suspicious-path check
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 def is_suspect_path(exe_path: str) -> tuple[bool, str]:
     """Return (is_suspicious, matched_fragment)."""
     lower = exe_path.lower().replace("\\", "/")
@@ -292,9 +292,9 @@ def is_suspect_path(exe_path: str) -> tuple[bool, str]:
     return False, ""
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # RAT name matching
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 def matches_rat_name(proc_name: str) -> Optional[str]:
     lower = proc_name.lower().replace(".exe", "").replace(".bin", "")
     for rat in RAT_NAMES:
@@ -303,9 +303,9 @@ def matches_rat_name(proc_name: str) -> Optional[str]:
     return None
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # Hidden / orphaned process detection
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # Windows bootstrap processes that are normally orphaned (parent smss.exe exits)
 _WIN_BOOTSTRAP_NAMES: set[str] = {
     "csrss.exe", "wininit.exe", "winlogon.exe", "services.exe",
@@ -325,7 +325,7 @@ def check_hidden_or_orphaned(proc: psutil.Process) -> Optional[str]:
                 if IS_WIN and name in _WIN_BOOTSTRAP_NAMES:
                     pass
                 else:
-                    return f"orphaned -- parent pid {ppid} no longer exists"
+                    return f"orphaned .  parent pid {ppid} no longer exists"
     except (psutil.AccessDenied, psutil.ZombieProcess):
         pass
 
@@ -350,9 +350,9 @@ def check_hidden_or_orphaned(proc: psutil.Process) -> Optional[str]:
     return None
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # DLL injection indicators (Windows)
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 def check_dll_injection(proc: psutil.Process) -> list[str]:
     """Look for DLL injection red flags in a process's loaded modules."""
     flags: list[str] = []
@@ -410,9 +410,9 @@ def check_dll_injection(proc: psutil.Process) -> list[str]:
     return flags
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # Main scan
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 def scan_processes(
     check_signatures: bool = True,
     verbose: bool = False,
@@ -427,31 +427,31 @@ def scan_processes(
         exe = proc.info["exe"]
 
         try:
-            # -- RAT name check --
+            # .  RAT name check . 
             rat_match = matches_rat_name(name)
             if rat_match:
                 report.add(Finding(pid, name, exe, "rat_name",
                                    f"matches known RAT pattern: {rat_match}"))
 
-            # -- Suspect path check --
+            # .  Suspect path check . 
             if exe:
                 suspect, frag = is_suspect_path(exe)
                 if suspect:
                     report.add(Finding(pid, name, exe, "suspect_path",
                                        f"running from suspicious location (matched '{frag}')"))
 
-                # -- Signature check --
+                # .  Signature check . 
                 if check_signatures and os.path.isfile(exe):
                     if not is_signed(exe):
                         report.add(Finding(pid, name, exe, "unsigned",
                                            "binary has no valid signature"))
 
-            # -- Hidden / orphaned --
+            # .  Hidden / orphaned . 
             reason = check_hidden_or_orphaned(proc)
             if reason:
                 report.add(Finding(pid, name, exe, "hidden", reason))
 
-            # -- DLL injection indicators --
+            # .  DLL injection indicators . 
             dll_flags = check_dll_injection(proc)
             for flag in dll_flags:
                 report.add(Finding(pid, name, exe, "dll_inject", flag))
@@ -468,9 +468,9 @@ def scan_processes(
     return report
 
 
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 # CLI
-# ---------------------------------------------------------------------------
+# . . . . . . . . . . . . . . . . . . . -
 def print_report(report: ProcessReport) -> None:
     print(f"\nProcess integrity scan complete")
     print(f"  scanned : {report.scanned}")
@@ -495,7 +495,7 @@ def print_report(report: ProcessReport) -> None:
     }
 
     for kind, findings in by_kind.items():
-        print(f"--- {labels.get(kind, kind)} ({len(findings)}) ---")
+        print(f". - {labels.get(kind, kind)} ({len(findings)}) . -")
         for f in findings:
             exe_str = f.exe or "(unknown path)"
             print(f"  [{f.pid}] {f.name}")

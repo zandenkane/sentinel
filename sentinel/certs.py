@@ -153,7 +153,7 @@ def audit_root_store() -> list[CertFinding]:
 
         flags: list[str] = []
 
-        # Flag 1: interception-capable -- self-signed + Server Auth EKU + private key
+        # Flag 1: interception-capable .  self-signed + Server Auth EKU + private key
         if cert.subject == cert.issuer and _has_server_auth_eku(cert) and has_pk:
             flags.append("INTERCEPT_CAPABLE: self-signed with ServerAuth EKU and private key")
 
@@ -195,7 +195,7 @@ def main() -> None:
         print(f"  Thumbprint : {f.thumbprint}")
         print(f"  Subject    : {f.subject}")
         print(f"  Issuer     : {f.issuer}")
-        print(f"  Valid      : {f.not_before.date()} -- {f.not_after.date()}")
+        print(f"  Valid      : {f.not_before.date()} .  {f.not_after.date()}")
         print(f"  PrivateKey : {f.has_private_key}")
         print(f"  Store      : {f.store}")
         if f.added_time:
