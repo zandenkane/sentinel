@@ -1,9 +1,10 @@
-"""Main orchestrator .  runs all detection modules and produces a consolidated report."""
+"""Main orchestrator -- runs all detection modules and produces a consolidated report."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import logging
 import platform
 import sys
 import time
@@ -12,13 +13,21 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-from sentinel.modules import (
-    arp_anomaly,
-    cert_audit,
-    net_scan,
+from sentinel import (
+    arp,
+    certs,
+    network,
     persistence,
-    proc_integrity,
+    process,
 )
+from sentinel import memory as memory_mod
+from sentinel import credstore as credstore_mod
+from sentinel import dnsmon as dnsmon_mod
+from sentinel import pipes as pipes_mod
+from sentinel import lsass as lsass_mod
+from sentinel.config import load_config
+
+log = logging.getLogger(__name__)
 
 
 class Severity(Enum):
@@ -49,12 +58,26 @@ class Finding:
 
 # Each module exposes run(quick: bool) -> list[Finding].
 MODULES = [
-    ("Network Scan", net_scan),
-    ("Process Integrity", proc_integrity),
+    ("Network Scan", network),
+    ("Process Integrity", process),
     ("Persistence Hunt", persistence),
-    ("Certificate Audit", cert_audit),
-    ("ARP Anomaly Detection", arp_anomaly),
+    ("Certificate Audit", certs),
+    ("ARP Anomaly Detection", arp),
 ]
+
+# Module name -> human label for the new modules
+NEW_MODULES = [
+    ("Memory Forensics", "memory", memory_mod),
+    ("Credential Store", "credstore", credstore_mod),
+    ("DNS Monitor", "dnsmon", dnsmon_mod),
+    ("Named Pipes", "pipes", pipes_mod),
+    ("LSASS Access", "lsass", lsass_mod),
+]
+
+ALL_MODULE_KEYS = (
+    ["network", "process", "persistence", "certs", "arp"]
+    + [key for _, key, _ in NEW_MODULES]
+)
 
 SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 
@@ -67,6 +90,100 @@ def _header() -> dict[str, str]:
         "python": platform.python_version(),
         "scan_start": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def _severity_from_str(s: str) -> Severity:
+    """Map a string severity to the Severity enum, defaulting to MEDIUM."""
+    mapping = {"critical": Severity.CRITICAL, "high": Severity.HIGH,
+               "medium": Severity.MEDIUM, "low": Severity.LOW, "info": Severity.INFO}
+    return mapping.get(s.lower(), Severity.MEDIUM)
+
+
+def _run_new_modules(quick: bool, selected: list[str] | None = None) -> list[Finding]:
+    """Run the new detection modules (memory, credstore, dnsmon, pipes, lsass)."""
+    results: list[Finding] = []
+    cfg = get_config()
+    timeout = cfg.module_timeout
+
+    for label, mod_key, mod in NEW_MODULES:
+        if selected and mod_key not in selected:
+            continue
+
+        tag = "quick" if quick else "full"
+        print(f"[*] Running {label} ({tag})...")
+        t0 = time.monotonic()
+
+        try:
+            if mod_key == "memory":
+                raw_findings = mod.run(quick=quick)
+                for rf in raw_findings:
+                    results.append(Finding(
+                        module="memory",
+                        severity=_severity_from_str(rf.severity),
+                        title=f"{rf.kind}: {rf.name}",
+                        detail=rf.detail,
+                    ))
+
+            elif mod_key == "credstore":
+                report = mod.scan()
+                for rf in report.findings:
+                    results.append(Finding(
+                        module="credstore",
+                        severity=_severity_from_str(rf.severity),
+                        title=f"{rf.kind}: {rf.process_name}",
+                        detail=rf.detail,
+                    ))
+
+            elif mod_key == "dnsmon":
+                report = mod.scan_dns_cache()
+                for rf in report.findings:
+                    results.append(Finding(
+                        module="dnsmon",
+                        severity=_severity_from_str(rf.severity),
+                        title=f"{rf.kind}: {rf.domain}",
+                        detail=rf.detail,
+                    ))
+
+            elif mod_key == "pipes":
+                report = mod.scan_pipes()
+                for rf in report.findings:
+                    sev = _severity_from_str("high" if rf.kind == "c2_pattern" else "medium")
+                    results.append(Finding(
+                        module="pipes",
+                        severity=sev,
+                        title=f"{rf.kind}: {rf.pipe_name}",
+                        detail=rf.detail,
+                    ))
+
+            elif mod_key == "lsass":
+                report = mod.scan_lsass()
+                for rf in report.findings:
+                    sev = _severity_from_str(
+                        "critical" if rf.access_type in ("handle", "dump_file") else "high"
+                    )
+                    results.append(Finding(
+                        module="lsass",
+                        severity=sev,
+                        title=f"{rf.access_type}: {rf.accessor_name}",
+                        detail=rf.reason,
+                    ))
+
+            elapsed = time.monotonic() - t0
+            count = len([r for r in results if r.module == mod_key])
+            print(f"    done in {elapsed:.1f}s -- {count} finding(s)")
+
+        except Exception as exc:
+            elapsed = time.monotonic() - t0
+            print(f"    FAILED after {elapsed:.1f}s: {exc}")
+            log.debug("module %s error", mod_key, exc_info=True)
+            results.append(Finding(
+                module=mod_key,
+                severity=Severity.MEDIUM,
+                title=f"{label} module error",
+                detail=str(exc),
+            ))
+
+    return results
 
 
 def run_modules(quick: bool, selected: list[str] | None = None) -> list[Finding]:
@@ -85,7 +202,7 @@ def run_modules(quick: bool, selected: list[str] | None = None) -> list[Finding]
         try:
             findings = mod.run(quick=quick)
             elapsed = time.monotonic() - t0
-            print(f"    done in {elapsed:.1f}s .  {len(findings)} finding(s)")
+            print(f"    done in {elapsed:.1f}s -- {len(findings)} finding(s)")
             results.extend(findings)
         except Exception as exc:
             elapsed = time.monotonic() - t0
@@ -96,6 +213,9 @@ def run_modules(quick: bool, selected: list[str] | None = None) -> list[Finding]
                 title=f"{label} module error",
                 detail=str(exc),
             ))
+
+    # Run new modules
+    results.extend(_run_new_modules(quick=quick, selected=selected))
 
     return results
 
@@ -132,7 +252,7 @@ def format_text_report(report: dict[str, Any]) -> str:
     lines.append("-" * 60)
 
     if not report["findings"]:
-        lines += ["  No findings .  system looks clean.", "=" * 60]
+        lines += ["  No findings -- system looks clean.", "=" * 60]
         return "\n".join(lines)
 
     sorted_f = sorted(report["findings"], key=lambda f: SEV_ORDER.get(f["severity"], 99))
@@ -152,16 +272,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--quick", action="store_true", default=True,
-                      help="Fast scan .  skip slow checks (default)")
+                      help="Fast scan -- skip slow checks (default)")
     mode.add_argument("--full", action="store_true",
-                      help="Deep scan .  run all checks")
+                      help="Deep scan -- run all checks")
     p.add_argument("--json", action="store_true", dest="json_out",
                    help="Output as JSON instead of text")
     p.add_argument("-o", "--output", type=str, default=None,
                    help="Write report to file")
     p.add_argument("-m", "--modules", nargs="+", default=None,
-                   choices=["net_scan", "proc_integrity", "persistence",
-                            "cert_audit", "arp_anomaly"],
+                   choices=ALL_MODULE_KEYS,
                    help="Run only specific modules")
     p.add_argument("--list-modules", action="store_true",
                    help="List available modules and exit")
@@ -171,10 +290,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
+    cfg = get_config()
+    log.info("config loaded from %s", cfg.source)
+
     if args.list_modules:
         print("Available modules:")
         for label, mod in MODULES:
             key = mod.__name__.rsplit(".", 1)[-1]
+            print(f"  {key:20s}  {label}")
+        for label, key, _ in NEW_MODULES:
             print(f"  {key:20s}  {label}")
         return 0
 
