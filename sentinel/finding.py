@@ -43,7 +43,7 @@ class Finding:
             logger.warning("invalid severity %r, falling back to info", self.severity)
             self.severity = "info"
 
-    # .  serialization helpers . 
+    # -- serialization helpers --
 
     def to_dict(self) -> dict[str, Any]:
         """Return a plain dict suitable for JSON serialization."""
@@ -53,7 +53,7 @@ class Finding:
         """Serialize to a JSON string."""
         return json.dumps(self.to_dict(), indent=indent)
 
-    # .  display helpers . 
+    # -- display helpers --
 
     def format_finding(self) -> str:
         """Produce a clean, human-readable text block."""

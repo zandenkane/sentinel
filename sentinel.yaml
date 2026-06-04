@@ -2,7 +2,7 @@
 # Copy to /etc/sentinel/sentinel.yaml or %PROGRAMDATA%\sentinel\sentinel.yaml
 # and edit for your environment.  Values shown here are the built-in defaults.
 
-# ── Beacon detection ──────────────────────────────────────────
+# -- Beacon detection --
 beacon:
   # Sliding window (seconds) over which connection intervals are sampled.
   window_duration: 300
@@ -19,7 +19,7 @@ beacon:
   # Seconds between connection-table snapshots during beacon analysis.
   sample_rate: 5
 
-# ── Known C2 ports ────────────────────────────────────────────
+# -- Known C2 ports --
 # Any outbound ESTABLISHED connection to one of these ports triggers
 # an immediate finding.  Add or remove entries to match your threat
 # model.  Format: port  # note
@@ -37,7 +37,7 @@ c2_ports:
   - 2222    # Async RAT / SSH tunnels
   - 50050   # Cobalt Strike team server
 
-# ── Severity settings ─────────────────────────────────────────
+# -- Severity settings --
 severity:
   # Exit code returned when the highest finding meets or exceeds
   # this level.  "high" means exit 1 only on HIGH or CRITICAL.
@@ -54,7 +54,7 @@ severity:
     # cert_audit: low
     # arp_anomaly: medium
 
-# ── Scan behavior ─────────────────────────────────────────────
+# -- Scan behavior --
 scan:
   # Default mode when neither --quick nor --full is passed on the CLI.
   # "quick" skips slow checks (deep DLL inspection, full cert chain
@@ -81,7 +81,7 @@ scan:
     - "/usr/lib/firmware/*"
     - "/snap/*"
 
-# ── Output settings ──────────────────────────────────────────
+# -- Output settings --
 output:
   # "json" for machine-parseable output, "text" for human-readable.
   format: text
