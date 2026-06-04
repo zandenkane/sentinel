@@ -15,9 +15,9 @@ you drop onto a suspect machine and run. It exits non-zero when it finds
 high-severity indicators, making it usable in scripts and CI pipelines.
 
 
-## Why
+## why did i do this
 
-Built this cuz I was bored. Happy holidays or whatever.
+built this cuz I was bored. happy holidays or watever.
 
 
 ## Configuration
