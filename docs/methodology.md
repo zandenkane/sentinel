@@ -1,8 +1,6 @@
 # Sentinel Detection Methodology
 
-All Rights Reserved. Proprietary and confidential. No forking, no redistribution.
-
-. -
+MIT License. See [LICENSE](../LICENSE) for details.
 
 ## 1. Overview
 
