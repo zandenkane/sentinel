@@ -102,8 +102,8 @@ def _severity_from_str(s: str) -> Severity:
 def _run_new_modules(quick: bool, selected: list[str] | None = None) -> list[Finding]:
     """Run the new detection modules (memory, credstore, dnsmon, pipes, lsass)."""
     results: list[Finding] = []
-    cfg = get_config()
-    timeout = cfg.module_timeout
+    cfg = load_config()
+    timeout = cfg.scan_timeout_sec
 
     for label, mod_key, mod in NEW_MODULES:
         if selected and mod_key not in selected:
@@ -290,8 +290,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
-    cfg = get_config()
-    log.info("config loaded from %s", cfg.source)
+    cfg = load_config()
+    log.info("config loaded")
 
     if args.list_modules:
         print("Available modules:")
