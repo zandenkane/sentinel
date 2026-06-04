@@ -1,5 +1,4 @@
 """ARP anomaly detection .  enumerate the ARP table and flag spoofing indicators."""
-# All Rights Reserved. Proprietary, no forking, no redistribution.
 
 from __future__ import annotations
 

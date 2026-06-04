@@ -1,0 +1,98 @@
+# sentinel.yaml -- default configuration
+# Copy to /etc/sentinel/sentinel.yaml or %PROGRAMDATA%\sentinel\sentinel.yaml
+# and edit for your environment.  Values shown here are the built-in defaults.
+
+# ── Beacon detection ──────────────────────────────────────────
+beacon:
+  # Sliding window (seconds) over which connection intervals are sampled.
+  window_duration: 300
+
+  # Maximum coefficient of variation between intervals before traffic
+  # is considered periodic.  Lower values catch tighter beacons but
+  # raise false positives on chatty apps.  0.15 = 15 % jitter.
+  jitter_threshold: 0.15
+
+  # Minimum number of interval samples required before the detector
+  # will flag a connection as beaconing.
+  min_samples: 4
+
+  # Seconds between connection-table snapshots during beacon analysis.
+  sample_rate: 5
+
+# ── Known C2 ports ────────────────────────────────────────────
+# Any outbound ESTABLISHED connection to one of these ports triggers
+# an immediate finding.  Add or remove entries to match your threat
+# model.  Format: port  # note
+c2_ports:
+  - 4444    # Metasploit default listener
+  - 5555    # Android ADB / various RATs
+  - 6666    # IRC-based botnets
+  - 1177    # DarkComet default
+  - 3127    # MyDoom backdoor
+  - 8443    # Cobalt Strike default HTTPS
+  - 8080    # Common HTTP alt / staging
+  - 9999    # Generic C2 catch-all
+  - 31337   # Back Orifice / eleet
+  - 1234    # Quasar RAT default
+  - 2222    # Async RAT / SSH tunnels
+  - 50050   # Cobalt Strike team server
+
+# ── Severity settings ─────────────────────────────────────────
+severity:
+  # Exit code returned when the highest finding meets or exceeds
+  # this level.  "high" means exit 1 only on HIGH or CRITICAL.
+  # Valid values: info, low, medium, high, critical
+  exit_threshold: high
+
+  # Per-module overrides.  Use these to raise or lower the baseline
+  # severity for a given module when its default is too noisy or
+  # too quiet for your environment.
+  module_overrides:
+    # net_scan: medium
+    # proc_integrity: high
+    # persistence: high
+    # cert_audit: low
+    # arp_anomaly: medium
+
+# ── Scan behavior ─────────────────────────────────────────────
+scan:
+  # Default mode when neither --quick nor --full is passed on the CLI.
+  # "quick" skips slow checks (deep DLL inspection, full cert chain
+  # validation, ARP cache replay).
+  default_mode: quick
+
+  # Per-module timeout in seconds.  If a module exceeds this limit
+  # the scanner kills it and logs a MEDIUM finding.
+  module_timeout: 120
+
+  # Processes whose names match any entry below are skipped during
+  # process-integrity checks.  Case-insensitive substring match.
+  excluded_processes:
+    - "MsMpEng.exe"         # Windows Defender
+    - "CrowdStrike"         # Falcon sensor
+    - "cbdefense"           # Carbon Black
+    - "SentinelAgent.exe"   # SentinelOne
+
+  # Filesystem paths skipped during persistence and binary scans.
+  # Supports globs.  Use forward slashes even on Windows.
+  excluded_paths:
+    - "C:/Windows/WinSxS/*"
+    - "C:/Windows/Installer/*"
+    - "/usr/lib/firmware/*"
+    - "/snap/*"
+
+# ── Output settings ──────────────────────────────────────────
+output:
+  # "json" for machine-parseable output, "text" for human-readable.
+  format: text
+
+  # 0 = findings only, 1 = module status lines, 2 = debug tracing.
+  verbosity: 1
+
+  # Path to write the report.  Leave empty ("") to print to stdout.
+  # The scanner appends .json automatically when format is json.
+  log_file: ""
+
+  # When true, also emit one-line-per-finding to syslog (Linux) or
+  # the Application event log (Windows).
+  syslog: false

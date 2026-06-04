@@ -1,5 +1,4 @@
 """Certificate store auditor for Windows Trusted Root CA stores."""
-# All Rights Reserved. Proprietary and confidential.
 
 from __future__ import annotations
 
