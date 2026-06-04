@@ -2,7 +2,7 @@
 
 All Rights Reserved. Proprietary and confidential. No forking, no redistribution.
 
----
+. -
 
 ## 1. Overview
 
@@ -24,7 +24,7 @@ The scanner assigns every finding a severity level from a five-tier model:
 The main scanner exits with code 1 if any HIGH or CRITICAL finding is present, and code 0
 otherwise. This makes it straightforward to gate CI/CD pipelines or cron jobs on scan results.
 
----
+. -
 
 ## 2. Module: Network Scan
 
@@ -147,7 +147,7 @@ beacons.
 
 Severity assignment for beacon candidates:
 
-- CV <= 5% (very regular): **CRITICAL** -- almost certainly automated
+- CV <= 5% (very regular): **CRITICAL** .  almost certainly automated
 - CV between 5% and 10%: **HIGH**
 - CV between 10% and 15%: **MEDIUM**. could be legitimate polling
 
@@ -157,7 +157,7 @@ Each unique remote IP gets a reverse DNS lookup via `socket.gethostbyaddr()`. Re
 cached per-scan to avoid redundant lookups. The resolved hostname or ASN hint is attached
 to every connection record and included in findings for analyst triage.
 
----
+. -
 
 ## 3. Module: Process Integrity
 
@@ -306,7 +306,7 @@ or `/dev/shm/`, which are common staging areas for reflective .so injection.
 
 Severity: **HIGH** for any DLL/SO loaded from a suspect path.
 
----
+. -
 
 ## 4. Module: Persistence Hunt
 
@@ -440,7 +440,7 @@ Findings:
 - Service binary unsigned and outside Program Files: **HIGH**
 - Service binary in a temp or user-writable directory: **CRITICAL**
 
----
+. -
 
 ## 5. Module: Certificate Audit
 
@@ -529,7 +529,7 @@ The certificate audit module focuses on detecting category 1 (interception) beca
 requires the most specific conditions (self-signed + ServerAuth EKU + private key) and
 represents the highest immediate risk.
 
----
+. -
 
 ## 6. Module: ARP Anomaly Detection
 
@@ -575,7 +575,7 @@ The `--update` flag overwrites the baseline with the current snapshot after chec
 allowing incremental monitoring over time. If no baseline exists on first run, the current
 state is saved as the new baseline.
 
----
+. -
 
 ## 7. Severity Model and Triage Priorities
 
@@ -629,7 +629,7 @@ For each finding, the report includes the module name, severity, a title line, d
 description, and UTC timestamp. The JSON output format allows direct ingestion into SIEM
 platforms or custom dashboards.
 
----
+. -
 
 ## 8. MITRE ATT&CK Mapping
 
@@ -665,7 +665,7 @@ where applicable, tactic category, and which module performs the detection.
 | T1557.001 | LLMNR/NBT-NS Poisoning and SMB Relay | Credential Access | Certificate Audit | Interception-capable cert detection (self-signed + ServerAuth + PK) |
 | T1557.002 | ARP Cache Poisoning | Credential Access | ARP Anomaly | Duplicate MAC detection, baseline MAC comparison |
 
----
+. -
 
 ## 9. Red Team Evasion Techniques and Defensive Countermeasures
 
@@ -752,7 +752,7 @@ rather than file timestamps to detect recently added certificates, making it res
 to timestomping. For the persistence module, the detection is based on binary properties
 (signature, path, name) rather than timestamps.
 
----
+. -
 
 ## 10. Operational Procedures
 
@@ -822,7 +822,7 @@ configuration for your engagement report.
 against the red team's activity log post-exercise to measure detection coverage. Any
 red team action that produced no finding represents a gap to address.
 
----
+. -
 
 ## 11. Detection Gaps and Future Work
 
@@ -842,7 +842,7 @@ planned future modules:
 | Log clearing | T1070.001 | Windows Event Log channel monitoring |
 | SSP injection | T1547.005 | LSA Security Packages registry monitoring |
 
----
+. -
 
 ## 12. References
 

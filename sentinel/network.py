@@ -1,7 +1,7 @@
 # All Rights Reserved. Proprietary and confidential.
 # No forking, no redistribution.
 
-"""Network connection analysis -- enumerates TCP connections, flags C2 ports,
+"""Network connection analysis .  enumerates TCP connections, flags C2 ports,
 detects beaconing patterns, checks process trust, and resolves ASN info."""
 
 from __future__ import annotations
@@ -261,7 +261,7 @@ def print_report(result: AnalysisResult) -> None:
         for r in result.suspicious_procs:
             tag = "no exe" if not r.exe_path else "untrusted"
             print(f"    {r.process_name} (PID {r.pid}) -> "
-                  f"{r.remote_addr}:{r.remote_port} -- {tag}")
+                  f"{r.remote_addr}:{r.remote_port} .  {tag}")
             if r.exe_path:
                 print(f"      path: {r.exe_path}")
 
