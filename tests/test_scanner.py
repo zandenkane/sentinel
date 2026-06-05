@@ -93,7 +93,7 @@ class TestArp:
 # .  Network C2 port detection . . . . . . -
 
 try:
-    import psutil
+    import psutil  # noqa: F401
     from sentinel import network
     HAS_PSUTIL = True
 except ImportError:
