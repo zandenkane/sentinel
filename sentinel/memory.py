@@ -17,7 +17,6 @@ import os
 import platform
 import struct
 from dataclasses import dataclass, field
-from sentinel.finding import Finding as SharedFinding
 from pathlib import Path
 from typing import Optional
 
@@ -44,11 +43,11 @@ class MemoryFinding:
 
 @dataclass
 class MemoryReport:
-    findings: list[Finding] = field(default_factory=list)
+    findings: list[MemoryFinding] = field(default_factory=list)
     scanned: int = 0
     errors: int = 0
 
-    def add(self, f: Finding) -> None:
+    def add(self, f: MemoryFinding) -> None:
         self.findings.append(f)
 
     @property
@@ -521,7 +520,7 @@ def scan_memory(pids: Optional[list[int]] = None) -> MemoryReport:
     return report
 
 
-def run(quick: bool = True) -> list[Finding]:
+def run(quick: bool = True) -> list[MemoryFinding]:
     """Entry point matching the sentinel module interface.
 
     Args:

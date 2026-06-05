@@ -13,7 +13,6 @@ import platform
 import re
 import sys
 from dataclasses import dataclass, field
-from sentinel.finding import Finding as SharedFinding
 from typing import Optional
 
 import psutil
@@ -33,11 +32,11 @@ class PipeFinding:
 
 @dataclass
 class PipeReport:
-    findings: list[Finding] = field(default_factory=list)
+    findings: list[PipeFinding] = field(default_factory=list)
     pipes_scanned: int = 0
     errors: int = 0
 
-    def add(self, f: Finding) -> None:
+    def add(self, f: PipeFinding) -> None:
         self.findings.append(f)
 
     @property
@@ -144,8 +143,8 @@ def _is_signed(pid: int) -> bool:
 
 
 # .  Linux checks . . 
-def _check_x11_unix() -> list[Finding]:
-    findings: list[Finding] = []
+def _check_x11_unix() -> list[PipeFinding]:
+    findings: list[PipeFinding] = []
     x11 = "/tmp/.X11-unix"
     if not os.path.isdir(x11):
         return findings
@@ -169,8 +168,8 @@ def _check_x11_unix() -> list[Finding]:
     return findings
 
 
-def _check_abstract_sockets() -> list[Finding]:
-    findings: list[Finding] = []
+def _check_abstract_sockets() -> list[PipeFinding]:
+    findings: list[PipeFinding] = []
     if not os.path.isfile("/proc/net/unix"):
         return findings
     try:
@@ -250,7 +249,7 @@ def print_report(report: PipeReport) -> None:
     labels = {"c2_pattern": "C2 matches", "high_entropy": "High-entropy names",
               "uuid_name": "UUID-format names", "unsigned_owner": "Unsigned owners",
               "abstract_socket": "Suspicious sockets"}
-    by_kind: dict[str, list[Finding]] = {}
+    by_kind: dict[str, list[PipeFinding]] = {}
     for f in report.findings:
         by_kind.setdefault(f.kind, []).append(f)
     for kind, items in by_kind.items():

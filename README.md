@@ -17,6 +17,9 @@ you drop onto a suspect machine and run. It exits non-zero when it finds
 high-severity indicators, making it usable in scripts and CI pipelines.
 
 
+## why did i do this
+
+built this cuz I was bored. happy holidays or watever.
 
 
 ## Configuration
