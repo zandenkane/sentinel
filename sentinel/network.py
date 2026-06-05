@@ -14,7 +14,7 @@ from pathlib import Path
 
 import psutil
 
-C2_PORTS = {
+DEFAULT_C2_PORTS = {
     4444,   # Metasploit default
     5555,   # Android debug / various RATs
     6666,   # IRC-based botnets
@@ -22,7 +22,46 @@ C2_PORTS = {
     3127,   # MyDoom
     9999,   # various C2
     31337,  # Back Orifice / eleet
+    8080,   # HTTP alt / Cobalt Strike
+    8443,   # HTTPS alt / C2 over TLS
+    2222,   # SSH tunneling / Paramiko RATs
+    4433,   # Cobalt Strike malleable
+    7443,   # Cobalt Strike HTTPS
+    1080,   # SOCKS proxy / pivoting
+    8888,   # HTTP proxy / various implants
+    12345,  # NetBus
+    54321,  # Back Orifice 2000
+    3389,   # RDP (suspicious if outbound from server)
+    5985,   # WinRM HTTP
+    5986,   # WinRM HTTPS
+    1234,   # Sliver default
+    8000,   # generic HTTP C2
+    443,    # HTTPS (flagged only for unsigned processes)
+    4438,   # Havoc default
+    9090,   # Meterpreter HTTPS
+    7777,   # various implants
+    6667,   # IRC C2
+    6668,   # IRC C2 alt
+    6669,   # IRC C2 alt
+    1337,   # eleet / various
+    13337,  # Poison Ivy variants
+    10999,  # Brute Ratel
+    50050,  # Cobalt Strike team server
+    40056,  # Mythic default
+    8081,   # HTTP alt C2
+    8082,   # HTTP alt C2
+    8181,   # HTTP alt C2
+    9443,   # HTTPS alt C2
+    53,     # DNS C2 (TCP, flagged for non-DNS processes)
 }
+
+# Load from config if available, otherwise use defaults
+try:
+    from sentinel.config import load_config
+    _cfg = load_config()
+    C2_PORTS = set(_cfg.c2_ports) if _cfg.c2_ports else DEFAULT_C2_PORTS
+except Exception:
+    C2_PORTS = DEFAULT_C2_PORTS
 
 MIN_BEACON_SAMPLES = 4
 BEACON_JITTER_THRESHOLD = 0.15

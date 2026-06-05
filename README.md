@@ -1,5 +1,7 @@
 # sentinel
 
+![CI](https://github.com/zandenkane/sentinel/actions/workflows/ci.yml/badge.svg)
+
 Host-based endpoint threat detection focused on RAT identification, spyware
 indicators, and network anomaly detection. Runs on Windows and Linux.
 Python 3.10+.
@@ -15,9 +17,6 @@ you drop onto a suspect machine and run. It exits non-zero when it finds
 high-severity indicators, making it usable in scripts and CI pipelines.
 
 
-## why did i do this
-
-built this cuz I was bored. happy holidays or watever.
 
 
 ## Configuration

@@ -25,7 +25,7 @@ All notable changes to sentinel are documented in this file.
 - False negatives in `is_signed` checks on Linux.
 - Certificate EKU bypass that allowed invalid extended key usage to pass validation.
 
-## [0.1.0] - 2026-04-01
+## [0.1.0] - 2026-06-04
 
 ### Added
 
