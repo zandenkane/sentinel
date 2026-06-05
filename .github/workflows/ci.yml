@@ -29,8 +29,8 @@ jobs:
         run: ruff check .
 
       - name: Type check with mypy
-        run: mypy --ignore-missing-imports --no-error-summary --disable-error-code=attr-defined,no-any-return,arg-type,assignment,return-value sentinel/
+        run: mypy --ignore-missing-imports sentinel/
         continue-on-error: true
 
       - name: Run tests
-        run: pytest -x --tb=short
+        run: pytest tests/ -x --tb=short -v
