@@ -13,6 +13,7 @@ import platform
 import re
 import sys
 from dataclasses import dataclass, field
+from sentinel.finding import Finding as SharedFinding
 from typing import Optional
 
 import psutil
@@ -22,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 @dataclass
-class Finding:
+class PipeFinding:
     pipe_name: str
     kind: str   # c2_pattern | high_entropy | uuid_name | unsigned_owner | abstract_socket
     detail: str
@@ -44,7 +45,7 @@ class PipeReport:
         return len(self.findings) == 0
 
 
-# .  C2 pipe patterns . . . . 
+# .  C2 pipe patterns . . 
 C2_PIPE_PATTERNS: list[tuple[str, str]] = [
     (r"msagent_",       "Cobalt Strike msagent"),
     (r"MSSE-",          "Cobalt Strike MSSE"),
@@ -110,7 +111,7 @@ def _match_c2(name: str) -> Optional[str]:
     return None
 
 
-# .  Windows enumeration . . . . -
+# .  Windows enumeration . . -
 def _enumerate_pipes_win() -> list[str]:
     try:
         return os.listdir(r"\\.\pipe\\")
@@ -142,7 +143,7 @@ def _is_signed(pid: int) -> bool:
         return False
 
 
-# .  Linux checks . . . . 
+# .  Linux checks . . 
 def _check_x11_unix() -> list[Finding]:
     findings: list[Finding] = []
     x11 = "/tmp/.X11-unix"
@@ -156,12 +157,12 @@ def _check_x11_unix() -> list[Finding]:
     for e in entries:
         full = os.path.join(x11, e)
         if not re.match(r"^X\d+$", e):
-            findings.append(Finding(full, "abstract_socket",
+            findings.append(PipeFinding(full, "abstract_socket",
                                     f"unexpected entry in /tmp/.X11-unix: {e}"))
         else:
             try:
                 if not stat.S_ISSOCK(os.stat(full).st_mode):
-                    findings.append(Finding(full, "abstract_socket",
+                    findings.append(PipeFinding(full, "abstract_socket",
                                             "X11 entry is not a socket"))
             except OSError:
                 pass
@@ -184,15 +185,15 @@ def _check_abstract_sockets() -> list[Finding]:
         name = path[1:]
         c2 = _match_c2(name)
         if c2:
-            findings.append(Finding(path, "c2_pattern",
+            findings.append(PipeFinding(path, "c2_pattern",
                                     f"abstract socket matches: {c2}"))
         elif _shannon(name) > ENTROPY_THRESHOLD and len(name) > 8:
-            findings.append(Finding(path, "high_entropy",
+            findings.append(PipeFinding(path, "high_entropy",
                                     f"high-entropy abstract socket ({_shannon(name):.2f})"))
     return findings
 
 
-# .  Main scan . . . . -
+# .  Main scan . . -
 def scan_pipes() -> PipeReport:
     report = PipeReport()
 
@@ -204,16 +205,16 @@ def scan_pipes() -> PipeReport:
                 continue
             c2 = _match_c2(name)
             if c2:
-                report.add(Finding(name, "c2_pattern", f"C2 pattern: {c2}"))
+                report.add(PipeFinding(name, "c2_pattern", f"C2 pattern: {c2}"))
                 continue
             if _UUID_RE.search(name):
-                report.add(Finding(name, "uuid_name",
+                report.add(PipeFinding(name, "uuid_name",
                                    "pipe name contains UUID, possibly generated"))
                 continue
             ent = _shannon(name)
             if ent > ENTROPY_THRESHOLD and len(name) > 10:
                 if _HEX_BLOCK_RE.search(name) or ent > 4.0:
-                    report.add(Finding(name, "high_entropy",
+                    report.add(PipeFinding(name, "high_entropy",
                                        f"random-looking name (entropy={ent:.2f})"))
         # Check owners of flagged pipes
         for f in list(report.findings):
@@ -226,7 +227,7 @@ def scan_pipes() -> PipeReport:
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
             if not _is_signed(pid):
-                report.add(Finding(f.pipe_name, "unsigned_owner",
+                report.add(PipeFinding(f.pipe_name, "unsigned_owner",
                                    f"owned by unsigned process (PID {pid})",
                                    pid=pid, process_name=f.process_name))
     else:
@@ -239,7 +240,7 @@ def scan_pipes() -> PipeReport:
     return report
 
 
-# .  CLI . . . . . -
+# .  CLI . . . -
 def print_report(report: PipeReport) -> None:
     print(f"\nNamed Pipe Scan  ({report.pipes_scanned} pipes)")
     if report.clean:

@@ -17,6 +17,7 @@ import os
 import platform
 import struct
 from dataclasses import dataclass, field
+from sentinel.finding import Finding as SharedFinding
 from pathlib import Path
 from typing import Optional
 
@@ -26,12 +27,12 @@ log = logging.getLogger(__name__)
 
 IS_WIN = platform.system() == "Windows"
 
-# . . . . . -
+# . . . -
 # Data types
-# . . . . . -
+# . . . -
 
 @dataclass
-class Finding:
+class MemoryFinding:
     pid: int
     name: str
     severity: str          # "info", "low", "medium", "high", "critical"
@@ -55,9 +56,9 @@ class MemoryReport:
         return len(self.findings) == 0
 
 
-# . . . . . -
+# . . . -
 # Constants
-# . . . . . -
+# . . . -
 
 # Windows memory protection flags
 PAGE_EXECUTE_READWRITE = 0x40
@@ -94,9 +95,9 @@ MIN_NOP_SLED = 16
 # Processes to skip (system-level, access will be denied anyway)
 SKIP_PIDS: set[int] = {0, 4}
 
-# . . . . . -
+# . . . -
 # Windows structures for VirtualQueryEx
-# . . . . . -
+# . . . -
 
 if IS_WIN:
     import ctypes.wintypes
@@ -180,9 +181,9 @@ if IS_WIN:
         return regions
 
 
-# . . . . . -
+# . . . -
 # Linux: parse /proc/[pid]/maps
-# . . . . . -
+# . . . -
 
 @dataclass
 class _LinuxRegion:
@@ -228,9 +229,9 @@ def _linux_read_mem(pid: int, addr: int, size: int) -> Optional[bytes]:
         return None
 
 
-# . . . . . -
+# . . . -
 # Shellcode scanning
-# . . . . . -
+# . . . -
 
 def _scan_for_shellcode(data: bytes) -> list[str]:
     """Scan a memory buffer for shellcode indicators. Returns matched labels."""
@@ -260,9 +261,9 @@ def _scan_for_shellcode(data: bytes) -> list[str]:
     return hits
 
 
-# . . . . . -
+# . . . -
 # Windows: process hollowing detection
-# . . . . . -
+# . . . -
 
 def _check_hollowing_win(
     pid: int,
@@ -305,7 +306,7 @@ def _check_hollowing_win(
         disk_sig = disk_header[pe_off: pe_off + 4]
         mem_sig = mem_data[mem_pe_off: mem_pe_off + 4]
         if disk_sig != mem_sig:
-            report.add(Finding(
+            report.add(MemoryFinding(
                 pid=pid, name=name, severity="critical",
                 kind="process_hollowing",
                 detail=(
@@ -321,7 +322,7 @@ def _check_hollowing_win(
         disk_opt = disk_header[pe_off + 4: pe_off + 28]
         mem_opt = mem_data[mem_pe_off + 4: mem_pe_off + 28]
         if disk_opt != mem_opt:
-            report.add(Finding(
+            report.add(MemoryFinding(
                 pid=pid, name=name, severity="critical",
                 kind="process_hollowing",
                 detail=(
@@ -333,9 +334,9 @@ def _check_hollowing_win(
         return  # only check the first MZ image region
 
 
-# . . . . . -
+# . . . -
 # Core scan logic: Windows
-# . . . . . -
+# . . . -
 
 def _scan_process_win(pid: int, name: str, exe: Optional[str], report: MemoryReport) -> None:
     """Scan a single process on Windows using VirtualQueryEx."""
@@ -359,7 +360,7 @@ def _scan_process_win(pid: int, name: str, exe: Optional[str], report: MemoryRep
 
             # .  RWX region detection . 
             if is_rwx:
-                report.add(Finding(
+                report.add(MemoryFinding(
                     pid=pid, name=name, severity="high",
                     kind="rwx_region",
                     detail=(
@@ -375,7 +376,7 @@ def _scan_process_win(pid: int, name: str, exe: Optional[str], report: MemoryRep
                 if data:
                     hits = _scan_for_shellcode(data)
                     for label in hits:
-                        report.add(Finding(
+                        report.add(MemoryFinding(
                             pid=pid, name=name, severity="critical",
                             kind="shellcode",
                             detail=(
@@ -387,7 +388,7 @@ def _scan_process_win(pid: int, name: str, exe: Optional[str], report: MemoryRep
 
             # .  Unbacked executable region . 
             if is_unbacked:
-                report.add(Finding(
+                report.add(MemoryFinding(
                     pid=pid, name=name, severity="high",
                     kind="unbacked_exec",
                     detail=(
@@ -404,9 +405,9 @@ def _scan_process_win(pid: int, name: str, exe: Optional[str], report: MemoryRep
         _k32.CloseHandle(handle)
 
 
-# . . . . . -
+# . . . -
 # Core scan logic: Linux
-# . . . . . -
+# . . . -
 
 def _scan_process_linux(pid: int, name: str, report: MemoryReport) -> None:
     """Scan a single process on Linux via /proc/[pid]/maps."""
@@ -424,7 +425,7 @@ def _scan_process_linux(pid: int, name: str, report: MemoryReport) -> None:
 
         # .  RWX region . 
         if is_rwx:
-            report.add(Finding(
+            report.add(MemoryFinding(
                 pid=pid, name=name, severity="high",
                 kind="rwx_region",
                 detail=(
@@ -440,7 +441,7 @@ def _scan_process_linux(pid: int, name: str, report: MemoryReport) -> None:
             if data:
                 hits = _scan_for_shellcode(data)
                 for label in hits:
-                    report.add(Finding(
+                    report.add(MemoryFinding(
                         pid=pid, name=name, severity="critical",
                         kind="shellcode",
                         detail=(
@@ -455,7 +456,7 @@ def _scan_process_linux(pid: int, name: str, report: MemoryReport) -> None:
             # skip well-known kernel mappings
             if r.path in ("[vdso]", "[vsyscall]"):
                 continue
-            report.add(Finding(
+            report.add(MemoryFinding(
                 pid=pid, name=name, severity="high",
                 kind="unbacked_exec",
                 detail=(
@@ -466,9 +467,9 @@ def _scan_process_linux(pid: int, name: str, report: MemoryReport) -> None:
             ))
 
 
-# . . . . . -
+# . . . -
 # Public API
-# . . . . . -
+# . . . -
 
 def scan_memory(pids: Optional[list[int]] = None) -> MemoryReport:
     """Scan process memory for injection and shellcode indicators.
