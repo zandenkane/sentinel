@@ -92,12 +92,17 @@ class TestArp:
 
 # .  Network C2 port detection . . . . . . -
 
-psutil = pytest.importorskip("psutil")
-from sentinel import network
+try:
+    import psutil
+    from sentinel import network
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 
 Addr = namedtuple("Addr", ["ip", "port"])
 FakeConn = namedtuple("FakeConn", ["laddr", "raddr", "status", "pid"])
 
+@pytest.mark.skipif(not HAS_PSUTIL, reason="psutil not installed")
 class TestNetworkC2:
     def _conns(self):
         return [
@@ -190,11 +195,15 @@ class TestDnsEntropy:
 
 # .  Certificate EKU checking . . . . . . . 
 
-cryptography = pytest.importorskip("cryptography")
-from cryptography.x509 import ExtensionNotFound
-from cryptography.x509.oid import ExtendedKeyUsageOID
-from sentinel.certs import _has_server_auth_eku
+try:
+    from cryptography.x509 import ExtensionNotFound
+    from cryptography.x509.oid import ExtendedKeyUsageOID
+    from sentinel.certs import _has_server_auth_eku
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
 
+@pytest.mark.skipif(not HAS_CRYPTO, reason="cryptography not installed")
 class TestCertEku:
     def _cert_with_eku(self, usages):
         cert = MagicMock()
