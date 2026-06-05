@@ -1,6 +1,12 @@
-# sentinel
+<p align="center">
+  <img src="assets/banner.png" alt="sentinel" width="100%">
+</p>
 
-![CI](https://github.com/zandenkane/sentinel/actions/workflows/ci.yml/badge.svg)
+<p align="center">
+  <a href="https://github.com/zandenkane/sentinel/actions/workflows/ci.yml"><img src="https://github.com/zandenkane/sentinel/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/python-3776AB?style=flat&logo=python&logoColor=white" alt="python">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+</p>
 
 Host-based endpoint threat detection focused on RAT identification, spyware
 indicators, and network anomaly detection. Runs on Windows and Linux.
@@ -30,72 +36,6 @@ observation window, jitter threshold, C2 port list, severity thresholds,
 excluded processes, and output format. Copy `sentinel.yaml` to your working
 directory or `~/.config/sentinel/config.yaml` and edit it. See the comments
 in the file for what each option does.
-
-
-## what it looks like
-
-```
-$ python -m sentinel.scanner --full
-
-[*] sentinel v0.2.0 starting full scan...
-
-[net]  scanning 23 established connections
-       [!] CRITICAL: PID 4812 (svchost.exe) -> 45.77.65.211:4444
-           unsigned binary, known C2 port (Metasploit default)
-           JA3: 72a589da586844d7f0818ce684948eea (Cobalt Strike)
-       [+] 22 connections clean
-
-[proc] scanning 187 running processes
-       [!] HIGH: update_service.exe (PID 2941)
-           unsigned, running from C:\Users\Public\Downloads\
-           not in any known software database
-       [!] MEDIUM: powershell.exe (PID 5523)
-           parent: excel.exe (suspicious parent-child)
-           cmdline contains -encodedcommand (obfuscated)
-       [+] 185 processes clean
-
-[persist] checking 12 persistence categories
-          [!] HIGH: scheduled task "WindowsUpdate" (non-Microsoft author)
-              action: C:\Users\Public\svc.exe
-          [+] 11 categories clean
-
-[mem]  scanning process memory for RWX regions
-       [!] CRITICAL: PID 4812 has 3 RWX regions (PAGE_EXECUTE_READWRITE)
-           shellcode signature detected (Metasploit stager)
-           unbacked executable memory (no file on disk)
-       [+] 186 processes clean
-
-[certs] auditing trusted root certificate store
-        [+] 47 roots checked, all known CAs
-
-[arp]   checking ARP table for spoofing
-        [+] no duplicate MACs, gateway MAC stable
-
-scan complete: 4 findings (2 critical, 1 high, 1 medium)
-exit code: 1
-```
-
-```mermaid
-graph TD
-    A[sentinel scan] --> N[Network analysis]
-    A --> P[Process integrity]
-    A --> M[Memory forensics]
-    A --> PE[Persistence hunting]
-    A --> C[Certificate audit]
-    A --> AR[ARP check]
-    A --> TLS[TLS fingerprinting]
-    A --> PT[Process tree analysis]
-    A --> F[Fileless malware detection]
-    N --> R[Findings report]
-    P --> R
-    M --> R
-    PE --> R
-    C --> R
-    AR --> R
-    TLS --> R
-    PT --> R
-    F --> R
-```
 
 
 ## Features
