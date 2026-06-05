@@ -840,9 +840,140 @@ planned future modules:
 | Log clearing | T1070.001 | Windows Event Log channel monitoring |
 | SSP injection | T1547.005 | LSA Security Packages registry monitoring |
 
-. -
+## 12. Memory Forensics (T1055.012, T1620)
 
-## 12. References
+The memory module targets indicators that only exist at runtime and cannot be
+found by static file analysis.
+
+**RWX region scanning.** On Windows, VirtualQueryEx walks the virtual address
+space of each process. Any committed region with PAGE_EXECUTE_READWRITE
+protection is flagged. Legitimate software almost never allocates RWX memory.
+The primary exceptions are JIT compilers (V8, .NET CLR), which are filtered
+by checking the owning module path. Everything else, especially anonymous RWX
+allocations not backed by a file, is a strong indicator of injected shellcode
+or unpacked malware.
+
+**Shellcode signature detection.** Inside each flagged RWX region, sentinel
+scans for known byte patterns: NOP sleds (0x90909090), x86 syscall stubs
+(0x0F05 preceded by register setup), egg hunter sequences (0x5090), and
+Metasploit-specific stage signatures. A match inside an RWX region owned by
+an otherwise legitimate process is a high-confidence injection indicator.
+
+**Process hollowing (T1055.012).** The module compares the on-disk PE header
+of each process against the in-memory image base. If the entry point or image
+base address in memory does not match the on-disk binary, the process has
+likely been hollowed: the original code was unmapped and replaced with
+malicious code while keeping the original process name and PID. This is a
+favorite technique for banking trojans and commodity RATs.
+
+**Unbacked executable regions.** Memory regions marked executable that have
+no corresponding file backing (MEM_PRIVATE with execute permissions, no
+mapped image) indicate dynamically allocated code. Combined with RWX
+detection, this catches reflective DLL injection and fileless malware that
+never touches disk.
+
+
+## 13. Credential Store Theft Detection (T1555.003)
+
+Most credential stealers (Redline, Raccoon, Vidar, custom infostealers)
+operate by reading browser credential databases directly from disk. Chrome
+stores passwords in a SQLite database called "Login Data," Firefox uses
+"logins.json" with "key4.db" for the decryption key, and Edge/Brave/Opera
+follow the Chromium model.
+
+**File handle monitoring.** Sentinel enumerates open file handles across all
+running processes and flags any process reading a known credential database
+that is not the owning browser itself. A Python script or unknown binary
+accessing Chrome's Login Data is a near-certain indicator of credential
+theft in progress.
+
+**DPAPI access patterns (Windows).** On Windows, Chrome encrypts stored
+passwords using DPAPI. The module monitors for unusual CryptUnprotectData
+calls from non-browser processes, which indicates an active decryption
+attempt against harvested credential blobs.
+
+**Temporal analysis.** Recently modified credential databases (within the
+last hour) that were not modified by the browser process itself suggest
+extraction or tampering.
+
+
+## 14. DNS Monitoring (T1071.004, T1568.002)
+
+**DGA detection.** Domain Generation Algorithms produce pseudo-random
+domain names that botnets use to find their C2 servers. Sentinel computes
+Shannon entropy on the second-level domain label of each cached DNS query.
+Labels with entropy above 3.5 are flagged as potential DGA output. This
+threshold was chosen to minimize false positives against legitimate CDN
+hostnames while still catching the high-randomness output of DGA families
+like Conficker, Murofet, and Necurs.
+
+**DNS tunneling.** Data exfiltration via DNS uses long subdomain labels to
+encode data in the query itself (e.g., base64-encoded payloads as
+subdomain.subdomain.evil.com). Sentinel flags any query where a subdomain
+label exceeds 40 characters, which is far beyond normal hostname conventions
+and strongly indicates tunneling tools like iodine, dnscat2, or Cobalt
+Strike DNS beacon.
+
+**DoH bypass detection.** Encrypted DNS (DNS over HTTPS) to external
+resolvers bypasses all network-level DNS monitoring. Sentinel flags TLS
+connections to known DoH provider IPs (1.1.1.1, 8.8.8.8, 9.9.9.9) on port
+443, which indicates a process is resolving DNS outside the network's
+configured resolver chain.
+
+
+## 15. Named Pipe C2 Detection (T1570, T1559.001)
+
+Named pipes are a primary IPC mechanism on Windows and are heavily used by
+C2 frameworks for lateral movement, inter-process communication between
+implant components, and SMB-based tunneling.
+
+**C2 signature matching.** Sentinel maintains a pattern list for known C2
+pipe names: Cobalt Strike defaults (msagent_, MSSE-, postex_, status_,
+DserNamePipe), Meterpreter (meterpreter, metsrv), Sliver, Havoc, and
+PoshC2. These are checked against all active named pipes on the system.
+
+**Entropy-based anomaly detection.** Pipes with random-looking names (high
+Shannon entropy or UUID-format strings) that are not associated with known
+Microsoft or third-party software are flagged. C2 frameworks that randomize
+their pipe names at deployment time produce names that are statistically
+distinguishable from human-chosen names.
+
+**Process attribution.** Each flagged pipe is traced back to its owning
+process. Unsigned or suspicious processes owning named pipes receive
+elevated severity scores.
+
+
+## 16. LSASS Access Detection (T1003.001)
+
+LSASS (Local Security Authority Subsystem Service) holds plaintext
+passwords, NTLM hashes, and Kerberos tickets in memory. Dumping LSASS is
+the single most common credential harvesting technique on Windows, used by
+mimikatz, comsvcs.dll MiniDump, procdump, nanodump, PPLdump, and dozens
+of custom tools.
+
+**Handle enumeration.** Sentinel enumerates all processes with an open
+handle to lsass.exe that includes PROCESS_VM_READ access. Any non-system
+process (not csrss, smss, services, svchost, or wininit) with this access
+is flagged as a critical finding. This catches both live memory reading and
+MiniDumpWriteDump-based approaches.
+
+**PPL status check.** Sentinel reports whether LSASS is running as a
+Protected Process Light (PPL). PPL prevents most usermode credential
+dumping tools from opening a handle. If PPL is not enabled, this is
+reported as a hardening gap.
+
+**Dump artifact scanning.** The module scans common dump locations (temp
+directories, user profile, desktop) for files matching known dump patterns:
+lsass.dmp, lsass*.dmp, procdump output files, and minidump headers
+(MDMP magic bytes). The presence of these files indicates a successful or
+attempted credential dump.
+
+**Child process detection.** LSASS should never spawn user-mode child
+processes. Any child of lsass.exe that is not a known system binary
+(e.g., not a LSA plugin DLL host) indicates injection or exploitation.
+
+
+## 17. References
 
 - MITRE ATT&CK Framework v14: https://attack.mitre.org/
 - MITRE ATT&CK Technique index: https://attack.mitre.org/techniques/enterprise/
