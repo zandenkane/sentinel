@@ -101,7 +101,7 @@ in the file for what each option does.
 ## Quick start
 
 ```
-git clone <repo-url> sentinel
+git clone https://github.com/zandenkane/sentinel.git
 cd sentinel
 pip install -e .
 ```
@@ -335,16 +335,26 @@ Parses the local ARP table and flags:
 
 ```
 sentinel/
-    __init__.py
-    scanner.py          # main orchestrator, CLI entry point
-    modules/
-        net_scan.py     # network connection analysis + beaconing
-        proc_integrity.py   # process signature and integrity checks
-        persistence.py  # persistence mechanism hunting
-        cert_audit.py   # certificate store audit
-        arp_anomaly.py  # ARP table anomaly detection
-pyproject.toml
-README.md
+    __init__.py          # package init, version
+    scanner.py           # main orchestrator, CLI entry point
+    config.py            # yaml config loader
+    finding.py           # shared Finding dataclass
+    network.py           # connection analysis, C2 ports, beaconing
+    process.py           # signature verification, RAT names, DLL injection
+    persistence.py       # registry, tasks, WMI, systemd, cron
+    memory.py            # RWX regions, shellcode, process hollowing
+    credstore.py         # browser credential theft detection
+    dnsmon.py            # DGA, tunneling, DoH bypass
+    pipes.py             # named pipe C2 detection
+    lsass.py             # credential dump detection, PPL status
+    certs.py             # certificate store audit
+    arp.py               # ARP spoofing detection
+sentinel.yaml            # default configuration
+pyproject.toml           # pip packaging
+docs/
+    methodology.md       # detection methodology writeup
+tests/
+    test_scanner.py      # pytest suite
 ```
 
 
