@@ -290,7 +290,7 @@ def _check_hollowing_win(
         return
 
     # Find the image base region (MEM_IMAGE at the process base)
-    mbi = MEMORY_BASIC_INFORMATION()
+    MEMORY_BASIC_INFORMATION()
     regions = _enum_regions(handle)
     for r in regions:
         if r.State != MEM_COMMIT or r.Type != MEM_IMAGE:

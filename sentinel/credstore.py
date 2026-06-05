@@ -256,7 +256,7 @@ def main() -> None:
         logging.getLogger(__name__).setLevel(logging.DEBUG)
 
     report = scan(check_dpapi=not args.no_dpapi)
-    print(f"\nCredential store scan complete")
+    print("\nCredential store scan complete")
     print(f"  cred DBs found    : {report.cred_dbs_found}")
     print(f"  processes checked : {report.processes_checked}")
     print(f"  findings          : {len(report.findings)}")

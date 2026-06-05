@@ -471,7 +471,7 @@ def scan_processes(
 # CLI
 # . . -
 def print_report(report: ProcessReport) -> None:
-    print(f"\nProcess integrity scan complete")
+    print("\nProcess integrity scan complete")
     print(f"  scanned : {report.scanned}")
     print(f"  findings: {len(report.findings)}")
     print(f"  errors  : {report.errors}")
