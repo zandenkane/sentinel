@@ -55,6 +55,38 @@ in the file for what each option does.
   crontabs (user and system), systemd units, shell RC file injection, and
   init.d scripts.
 
+- **Memory forensics**. Scans running processes for RWX memory regions
+  (PAGE_EXECUTE_READWRITE, almost never legitimate), shellcode signatures
+  (NOP sleds, syscall stubs, egg hunters, Metasploit patterns), process
+  hollowing indicators, and unbacked executable regions not mapped to any
+  file on disk. Uses ctypes and VirtualQueryEx on Windows, /proc/pid/maps
+  on Linux.
+
+- **Credential store theft detection**. Monitors for non-browser processes
+  reading Chrome, Firefox, Edge, Brave, and Opera credential databases.
+  This is the core indicator for credential stealers like Redline, Raccoon,
+  and custom infostealers. Flags any process accessing Login Data, key4.db,
+  or logins.json that is not the browser itself.
+
+- **DNS monitoring**. Parses the DNS client cache and flags high-entropy
+  domain names (Shannon entropy above 3.5 on the second-level label) as
+  possible DGA traffic. Detects DNS tunneling via unusually long subdomain
+  labels. Flags connections to known DoH providers on port 443 as potential
+  DNS bypass attempts.
+
+- **Named pipe C2 detection**. Enumerates all named pipes and checks against
+  known C2 pipe name patterns for Cobalt Strike (msagent_, MSSE-, postex_,
+  status_), Meterpreter, Sliver, Havoc, and PoshC2. Flags high-entropy or
+  UUID-format pipe names not associated with known software. Includes a
+  known-good allowlist to reduce false positives on standard Windows system
+  pipes.
+
+- **LSASS access detection**. Flags any non-system process with an open
+  handle to lsass.exe, which is the primary indicator for credential dumping
+  tools (mimikatz, comsvcs.dll MiniDump, procdump, nanodump). Checks LSASS
+  PPL (Protected Process Light) status. Scans for dump file artifacts in
+  temp directories. Detects suspicious LSASS child processes.
+
 - **Certificate store audit**. Inspects the local certificate store for
   untrusted roots, expired certificates, and certificates with unusual
   properties that might indicate MITM proxying.

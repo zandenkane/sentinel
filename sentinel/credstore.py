@@ -69,7 +69,7 @@ class CredStoreReport:
         return len(self.findings) == 0
 
 
-# .  path helpers . . . . . . . . . . . . . . . 
+# .  path helpers . . . . . . . . 
 
 def _home_dirs() -> list[Path]:
     root = Path(os.environ.get("SYSTEMDRIVE", "C:") + "\\Users") if IS_WIN else Path("/home")
@@ -143,7 +143,7 @@ def _open_files(pid: int) -> list[str]:
         return []
 
 
-# .  detection checks . . . . . . . . . . . . . . 
+# .  detection checks . . . . . . . 
 
 def _check_recent_modifications(cred_paths: list[Path]) -> list[Finding]:
     findings: list[Finding] = []
@@ -198,7 +198,7 @@ def _check_dpapi_access() -> list[Finding]:
     return findings
 
 
-# .  main scan . . . . . . . . . . . . . . . -
+# .  main scan . . . . . . . . -
 
 def scan(check_dpapi: bool = True) -> CredStoreReport:
     """Scan for non-browser processes accessing browser credential stores."""
@@ -243,7 +243,7 @@ def scan(check_dpapi: bool = True) -> CredStoreReport:
     return report
 
 
-# .  CLI . . . . . . . . . . . . . . . . . -
+# .  CLI . . . . . . . . . -
 
 def main() -> None:
     import argparse, sys  # noqa: E401
