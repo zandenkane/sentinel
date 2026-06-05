@@ -59,7 +59,7 @@ class DnsReport:
         return len(self.findings) == 0
 
 
-# .  entropy . . -
+# .  entropy . -
 
 def shannon_entropy(label: str) -> float:
     """Shannon entropy in bits per character. English words ~2.5-3.0; random >3.5."""
@@ -72,7 +72,7 @@ def shannon_entropy(label: str) -> float:
     return -sum((c / n) * math.log2(c / n) for c in freq.values())
 
 
-# .  domain age via RDAP . . -
+# .  domain age via RDAP . -
 
 def domain_age_days(domain: str, timeout: float = 4.0) -> Optional[int]:
     """Query RDAP for registration date; return age in days or None on failure."""
@@ -99,7 +99,7 @@ def domain_age_days(domain: str, timeout: float = 4.0) -> Optional[int]:
     return None
 
 
-# .  DNS cache parsing (Windows) . . -
+# .  DNS cache parsing (Windows) . -
 
 def _parse_ipconfig_dns(text: str) -> list[dict[str, str]]:
     entries: list[dict[str, str]] = []
@@ -164,7 +164,7 @@ def read_dns_cache() -> list[dict[str, str]]:
     return []
 
 
-# .  helpers . . 
+# .  helpers . 
 
 def _extract_sld(domain: str) -> str:
     parts = domain.rstrip(".").split(".")
@@ -179,7 +179,7 @@ def _longest_sub_label(domain: str) -> tuple[str, int]:
     return (longest, len(longest))
 
 
-# .  detectors . . -
+# .  detectors . -
 
 def detect_dga(entries: list[dict[str, str]]) -> list[Finding]:
     """Flag domains whose SLD has Shannon entropy above threshold."""
@@ -264,7 +264,7 @@ def detect_young_domains(entries: list[dict[str, str]], max_lookups: int = 20) -
     return findings
 
 
-# .  scan entry point . . -
+# .  scan entry point . -
 
 def scan_dns_cache(
     check_dga: bool = True, check_tunnel: bool = True,

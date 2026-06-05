@@ -44,7 +44,7 @@ class PipeReport:
         return len(self.findings) == 0
 
 
-# .  C2 pipe patterns . . 
+# .  C2 pipe patterns . 
 C2_PIPE_PATTERNS: list[tuple[str, str]] = [
     (r"msagent_",       "Cobalt Strike msagent"),
     (r"MSSE-",          "Cobalt Strike MSSE"),
@@ -110,7 +110,7 @@ def _match_c2(name: str) -> Optional[str]:
     return None
 
 
-# .  Windows enumeration . . -
+# .  Windows enumeration . -
 def _enumerate_pipes_win() -> list[str]:
     try:
         return os.listdir(r"\\.\pipe\\")
@@ -142,7 +142,7 @@ def _is_signed(pid: int) -> bool:
         return False
 
 
-# .  Linux checks . . 
+# .  Linux checks . 
 def _check_x11_unix() -> list[PipeFinding]:
     findings: list[PipeFinding] = []
     x11 = "/tmp/.X11-unix"
@@ -192,7 +192,7 @@ def _check_abstract_sockets() -> list[PipeFinding]:
     return findings
 
 
-# .  Main scan . . -
+# .  Main scan . -
 def scan_pipes() -> PipeReport:
     report = PipeReport()
 
@@ -239,7 +239,7 @@ def scan_pipes() -> PipeReport:
     return report
 
 
-# .  CLI . . . -
+# .  CLI . . -
 def print_report(report: PipeReport) -> None:
     print(f"\nNamed Pipe Scan  ({report.pipes_scanned} pipes)")
     if report.clean:

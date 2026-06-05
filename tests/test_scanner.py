@@ -15,7 +15,7 @@ from sentinel.config import Config, load_config
 from sentinel import arp, persistence
 from sentinel.dnsmon import shannon_entropy, detect_dga, DGA_ENTROPY_THRESHOLD
 
-# .  Finding dataclass . . . . . . . -
+# .  Finding dataclass . . . . -
 
 class TestFinding:
     def test_create_and_to_dict(self):
@@ -39,7 +39,7 @@ class TestFinding:
         f = Finding(module="x", title="t", severity="bogus", detail="d", evidence="e")
         assert f.severity == "info"
 
-# .  Config loading . . . . . . . . 
+# .  Config loading . . . . 
 
 class TestConfig:
     def test_defaults_no_file(self):
@@ -61,7 +61,7 @@ class TestConfig:
         assert cfg.verbosity == 2
         assert cfg.scan_timeout_sec == 300.0  # unchanged default
 
-# .  ARP table parsing . . . . . . . -
+# .  ARP table parsing . . . . -
 
 ARP_OUTPUT = (
     "Interface: 192.168.1.1 . - 0x3\n"
@@ -90,7 +90,7 @@ class TestArp:
         assert alerts[0]["mac"] == "aa:bb:cc:dd:ee:01"
         assert set(alerts[0]["ips"]) == {"192.168.1.10", "192.168.1.20"}
 
-# .  Network C2 port detection . . . . . . -
+# .  Network C2 port detection . . . -
 
 try:
     import psutil  # noqa: F401
@@ -128,7 +128,7 @@ class TestNetworkC2:
         c2 = network.flag_c2(network.enumerate_connections())
         assert len(c2) == 0
 
-# .  Persistence registry key parsing . . . . . . 
+# .  Persistence registry key parsing . . . 
 
 class TestPersistenceRegVals:
     def _fake_winreg(self, entries):
@@ -164,7 +164,7 @@ class TestPersistenceRegVals:
         monkeypatch.setattr(persistence, "winreg", fake, raising=False)
         assert persistence._reg_vals(0x80000002, r"DOES\NOT\EXIST") == []
 
-# .  DNS entropy / DGA detection . . . . . . -
+# .  DNS entropy / DGA detection . . . -
 
 class TestDnsEntropy:
     def test_uniform_single_char(self):
@@ -193,7 +193,7 @@ class TestDnsEntropy:
                    {"name": "docs.python.org", "data": "5.6.7.8"}]
         assert len(detect_dga(entries)) == 0
 
-# .  Certificate EKU checking . . . . . . . 
+# .  Certificate EKU checking . . . . 
 
 try:
     from cryptography.x509 import ExtensionNotFound
