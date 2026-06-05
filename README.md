@@ -28,6 +28,16 @@ high-severity indicators, making it usable in scripts and CI pipelines.
 built this cuz I was bored. happy holidays or watever.
 
 
+
+<p align="center">
+  <img src="assets/coverage.png" alt="detection coverage by module" width="90%">
+</p>
+
+<p align="center">
+  <img src="assets/architecture.png" alt="architecture" width="90%">
+</p>
+
+
 ## Configuration
 
 Sentinel ships with a `sentinel.yaml` config file that lets you tune
